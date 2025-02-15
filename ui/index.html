@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="./styles.css" rel="stylesheet">
+    <!-- Load Vue.js first -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="scripts.js" defer></script>
+</head>
+<body>
+    <div id="app">
+        <div class="subtitles">
+            <div class="subtitle-wrapper" :class="{ show: showSubtitle, hide: showSubtitle === false }">
+                <p class="npc-name">Nae Moraru: <span class="npc-text">{{currentSubtitle}}</span></p>
+            </div>
+        </div>
+        
+        <div class="hits">
+            <div class="hits-wrapper" :class="{ show: showHit, hide: showHit === false}">
+                <div class="currentStatus" :class="{ first: hits[0].value, second: hits[1].value, third: hits[2].value }"></div>
+                <p class="hits-count">{{currentHits}} <span style="color: white">/</span> {{requirement}}</p>
+            </div>
+        </div>
+
+        <div class="quest-info">
+            <div class="quest-info-wrapper" :class="{ show: showQuest, hide: showQuest === false}">
+                <div class="push-pin"></div>
+                <p><span style="color: rgb(255, 136, 0); font-weight: 700;">Halloween Quest:</span> Nae Moraru</p>
+                <progress :value="currentPumpkins" :max="targetPumpkins" class="quest-progress" v-if="showProgress"></progress>
+                <p class="quest-count" v-if="showProgress">Ai distrus <span style="color: rgb(255, 136, 0);">{{currentPumpkins}}</span> din <span style="color: rgb(255, 136, 0);">{{targetPumpkins}}</span> dovleci</p>
+            
+                <p class="quest-tip">{{questTip}}</p>
+            </div>
+        </div>
+
+        <div class="quest-selector" v-show="showQuestSelector">
+            <p class="quest-selector-title">Alege quest-ul dorit!</p>
+            <div class="quests">
+                <div class="quest" @click="startQuest(1)">
+                    <p>Quest #1</p>
+                </div>
+                <div class="quest" @click="startQuest(2)">
+                    <p>Quest #2</p>
+                </div>
+                <div class="quest" v-if="showHandleSecrets" @click="finishQuest()">
+                    <p>Predă secretele</p>
+                </div>
+            </div>
+            <img class="tombstone" src="./assets/tombstone.png" width="400" height="400">
+            <img class="ghost2" src="./assets/ghost2.png" width="300" height="300">
+            <img class="ghost" src="./assets/ghost.png" width="200" height="200">
+            <img class="scythe" src="./assets/scythe.png" width="300" height="300">
+        </div>
+
+        <div class="mind-game" v-if="showMindGame">
+            <div class="mind-game-wrapper" :class="{show: showMindGameWrapper, hide: showMindGameWrapper === false}">
+                <p class="mind-game-title" :class="{middle: showMindGameTitle >= 1, top: showMindGameTitle === 2, hide: showMindGameTitle === false}">{{mindGameTitle}}</p>
+                <div class="mind-game-number" :class="{show: showMindGameNumber , hide: showMindGameNumber === false}">
+                    <p>{{mindGameNumber}}</p>
+                </div>
+                <div class="mind-game-timer" :class="{show: showMindGameNumber , hide: showMindGameNumber === false}"></div>
+
+                <input class="mind-game-input" :class="{show: showMindGameInput, hide: showMindGameInput === false}" v-model="mindGameInput" type="text" placeholder="______" maxlength="6">
+                <div class="mind-game-timer" :class="{show: showMindGameInput , hide: showMindGameInput === false}"></div>
+            </div>
+        </div>
+
+        <div class="mini-game" v-if="showMinigame" :class="{show: showMinigame, hide: showMinigame === false}">
+            <div class="top-bar">
+                <div class="left-side">
+                    <p>Mack OS</p>
+                    <p>File</p>
+                    <p>Edit</p>
+                    <p>Window</p>
+                    <p>Help</p>
+                </div>
+                <div class="right-side">
+                    <p>{{currentTime}}</p>
+                    <p>↺</p>
+                    <p>▷</p>
+                    <p>II</p>
+                    <p>◁</p>
+                    <p>↻</p>
+                    <p>♫</p> 
+                </div>
+            </div>
+
+            <div class="auth" :class="{show: showAuth, hide: showAuth === false}">
+                <p class="auth-title">Log onto your account</p>
+                <div style="margin-top: 40px;">
+                    <p class="auth-input">Username:</p>
+                    <div class="auth-wrapper">
+                        <p style="margin: 10px">magulsuprem69</p>
+                    </div>
+                </div>
+                <div>
+                    <p class="auth-input">Key:</p>
+                    <div class="auth-wrapper">
+                        <p style="margin: 10px">{{displayedText}}</p>
+                    </div>
+                </div>
+                <div class="proceed-button" :class="{show: showProceedButton}" @click="closeAuth()">
+                    <p>Proceed</p>
+                    <span class="unavailable-line" :class="{hide: showProceedButton}"></span>
+                </div>
+            </div>
+
+            <div class="apps" v-show="showApps">
+                <div class="app" v-for="(app, index) in apps" index="index" :class="{selected: app.selected}" @click="clickApp(app)">
+                    <img :src="`./assets/${app.picture}`" width="60" height="60">
+                    <p class="app-name">{{app.name}}</p>
+                </div>
+            </div>
+
+            <div class="terminal" :class="{show: showTerminal, hide: showTerminal === false}">
+                <div class="terminal-top-bar">
+                    <div class="terminal-top-bar-left-side">
+                        <p>Terminal</p>
+                    </div>
+                    <div class="terminal-top-bar-right-side">
+                        <p class="terminal-controls" style="background-color: rgba(255, 0, 0, 0.555)">X</p>
+                        <p class="terminal-controls" style="background-color: rgba(0, 255, 98, 0.555)">O</p>
+                        <p class="terminal-controls" style="background-color: rgba(251, 255, 0, 0.555)" @click="controlApp('minimize', 'terminal')">-</p>
+                    </div>
+                </div>
+                <div class="terminal-text">
+                    <p>Mack OS [Version 12.4.5332.4123]</p>
+                    <p>© Pear Corporation Ltd. All rights reserved.</p>
+                    <br>
+                    <p v-for="(command, index) in ranCommands" index="index">{{command.text}}</p>
+                </div>
+            </div>
+
+            <div class="folder" :class="{show: showFolder, hide: showFolder === false}">
+                <div class="folder-top-bar">
+                    <div class="folder-top-bar-left-side">
+                        <p>Attention</p>
+                    </div>
+                    <div class="folder-top-bar-right-side">
+                        <p class="folder-controls" style="background-color: rgba(255, 0, 0, 0.555)" @click="controlApp('close', 'folder')">X</p>
+                        <p class="folder-controls" style="background-color: rgba(0, 255, 98, 0.555)">O</p>
+                        <p class="folder-controls" style="background-color: rgba(251, 255, 0, 0.555)" @click="controlApp('minimize', 'folder')">-</p>
+                    </div>
+                </div>
+                <p class="folder-text">You do not have access to this folder</p>
+            </div>
+
+            <div class="taskbar" v-show="openApps.length > 0">
+                <div class="taskbar-app" v-for="(app, index) in openApps" index="index" @click="showApp(app.type)">
+                    <img :src="`./assets/${app.picture}`" width="50" height="50">
+                </div>
+            </taskbar>
+        </div>
+    
+    </div>
+    <div class="shop">
+        <div class="shop-darken"></div>
+        <p class="shop-title">Halloween Shop</p>
+        <div class="roulette">
+            <div class="wheel">
+              <div 
+                v-for="(reward, index) in rewards" 
+                :key="index" 
+                class="sector"
+                :class="{ active: index === currentSector }"
+              >
+                <img :src="`./assets/${reward.picture}`" width="80" height="80">
+              </div>
+            </div>
+        
+            <div class="roulette-button" @click="spinRoulette">
+                <img class="roulette-arrows" :class="{spin: startSpin}" src="./assets/arrows.png" width="30" height="30">
+            </div>
+            <div class="roulette-price">{{roulettePrice}}<img class="roulette-arrows" src="./assets/candy.png" width="30" height="30"></div>
+        </div>
+        <div class="rewards-button" @click="toggleRewardsList">
+            <img src="./assets/info.png" width="30" height="30">
+        </div>
+        <div class="rewards-list" :class="{show: showRewardsList , hide: showRewardsList === false}">
+            <p class="rewards-title">Premii posibile:</p>
+            <p class="reward" v-for="(reward, index) in rewards" :key="index">{{reward.title}} - {{reward.chance}}%</p>
+        </div>
+    </div>
+</body>
+</html>
